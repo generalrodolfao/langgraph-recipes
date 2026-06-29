@@ -18,7 +18,6 @@ from datetime import date, datetime
 from typing import TypedDict
 
 import duckdb
-import pandas as pd
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
 
@@ -39,16 +38,18 @@ from features import (
 
 
 class EstadoAgent(TypedDict):
-    """Estado compartilhado entre nós do grafo."""
+    """Estado compartilhado entre nós do grafo (apenas dados serializáveis)."""
 
     input_path: str
     output_path: str
-    df: pd.DataFrame | None
-    con: duckdb.DuckDBPyConnection | None
     validacao: dict
-    features: dict
+    feature_names: list[str]
     erros: list[str]
     status: str
+
+
+# Estado não-serializável (DataFrame, conexão DuckDB) — mantido em memória
+_runtime: dict = {}
 
 
 def no_ingest(state: EstadoAgent) -> EstadoAgent:
@@ -57,15 +58,18 @@ def no_ingest(state: EstadoAgent) -> EstadoAgent:
     df = carregar_dados(state["input_path"])
 
     con = duckdb.connect(":memory:")
-    con.register("vendas", df)
-    con.execute("CREATE TEMP TABLE vendas AS SELECT * FROM vendas")
+    con.register("vendas_raw", df)
+    con.execute("DROP TABLE IF EXISTS vendas")
+    con.execute("CREATE TEMP TABLE vendas AS SELECT * FROM vendas_raw")
+    con.unregister("vendas_raw")
+
+    _runtime["df"] = df
+    _runtime["con"] = con
 
     print(f"[ingest] {len(df):,} linhas carregadas")
 
     return {
         **state,
-        "df": df,
-        "con": con,
         "status": "ingest_ok",
     }
 
@@ -73,7 +77,8 @@ def no_ingest(state: EstadoAgent) -> EstadoAgent:
 def no_validate(state: EstadoAgent) -> EstadoAgent:
     """Valida schema e qualidade dos dados."""
     print("[validate] Validando schema...")
-    resultado = validar_schema(state["df"])
+    df = _runtime["df"]
+    resultado = validar_schema(df)
 
     if resultado["valido"]:
         print("[validate] Schema OK")
@@ -89,22 +94,28 @@ def no_validate(state: EstadoAgent) -> EstadoAgent:
 def no_transform(state: EstadoAgent) -> EstadoAgent:
     """Limpa e transforma dados."""
     print("[transform] Limpando dados...")
-    df_limpo = limpar_dados(state["df"])
-    removidas = len(state["df"]) - len(df_limpo)
+    df = _runtime["df"]
+    df_limpo = limpar_dados(df)
+    removidas = len(df) - len(df_limpo)
 
     con = duckdb.connect(":memory:")
-    con.register("vendas", df_limpo)
-    con.execute("CREATE TEMP TABLE vendas AS SELECT FROM vendas")
+    con.register("vendas_limpo", df_limpo)
+    con.execute("DROP TABLE IF EXISTS vendas")
+    con.execute("CREATE TEMP TABLE vendas AS SELECT * FROM vendas_limpo")
+    con.unregister("vendas_limpo")
+
+    _runtime["df"] = df_limpo
+    _runtime["con"] = con
 
     print(f"[transform] {removidas} linhas removidas, {len(df_limpo):,} restantes")
 
-    return {**state, "df": df_limpo, "con": con, "status": "transform_ok"}
+    return {**state, "status": "transform_ok"}
 
 
 def no_feature_calc(state: EstadoAgent) -> EstadoAgent:
     """Calcula todas as features."""
     print("[features] Calculando features...")
-    con = state["con"]
+    con = _runtime["con"]
     data_ref = date.today()
 
     features = {}
@@ -133,16 +144,18 @@ def no_feature_calc(state: EstadoAgent) -> EstadoAgent:
     print("  - top_produtos...")
     features["top_produtos"] = calcular_top_produtos(con)
 
+    _runtime["features"] = features
+
     total_linhas = sum(len(df) for df in features.values())
     print(f"[features] {len(features)} tabelas geradas, {total_linhas:,} linhas totais")
 
-    return {**state, "features": features, "status": "features_ok"}
+    return {**state, "feature_names": list(features.keys()), "status": "features_ok"}
 
 
 def no_save(state: EstadoAgent) -> EstadoAgent:
     """Salva features em DuckDB."""
     print(f"[save] Salvando features em {state['output_path']}...")
-    salvar_features(state["con"], state["features"], state["output_path"])
+    salvar_features(_runtime["con"], _runtime["features"], state["output_path"])
 
     tamanho = os.path.getsize(state["output_path"])
     print(f"[save] Arquivo salvo: {tamanho / 1024 / 1024:.1f} MB")
@@ -205,10 +218,8 @@ def executar_pipeline(input_path: str, output_path: str):
     estado_inicial: EstadoAgent = {
         "input_path": input_path,
         "output_path": output_path,
-        "df": None,
-        "con": None,
         "validacao": {},
-        "features": {},
+        "feature_names": [],
         "erros": [],
         "status": "start",
     }
@@ -221,7 +232,7 @@ def executar_pipeline(input_path: str, output_path: str):
     print()
     print(f"=== Pipeline concluído ===")
     print(f"Status: {resultado['status']}")
-    print(f"Features geradas: {len(resultado['features'])} tabelas")
+    print(f"Features geradas: {len(resultado['feature_names'])} tabelas")
     print(f"Tempo total: {duracao:.1f}s")
 
     if resultado["erros"]:

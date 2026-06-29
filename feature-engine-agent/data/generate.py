@@ -88,7 +88,8 @@ def gerar_transacoes(
         data_venda = np.random.choice(datas)
 
         produto = produtos_df[produtos_df["produto_id"] == produto_id].iloc[0]
-        preco = produto["preco_base"] + np.random.normal(0, preco["preco_base"] * 0.05)
+        preco_base = produto["preco_base"]
+        preco = preco_base + np.random.normal(0, preco_base * 0.05)
         preco = max(preco, produto["custo"] * 1.1)
 
         quantidade = np.random.randint(1, 20)

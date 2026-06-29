@@ -110,13 +110,12 @@ class TestPipelineEndToEnd:
     def test_pipeline_completo(self):
         from agent import executar_pipeline
 
-        with tempfile.NamedTemporaryFile(suffix=".duckdb", delete=False) as tmp:
-            output_path = tmp.name
+        output_path = os.path.join(tempfile.gettempdir(), "test_features.duckdb")
 
         try:
             resultado = executar_pipeline("data/vendas.parquet", output_path)
             assert resultado["status"] == "done"
-            assert len(resultado["features"]) == 8
+            assert len(resultado["feature_names"]) == 8
 
             import duckdb
             con = duckdb.connect(output_path)

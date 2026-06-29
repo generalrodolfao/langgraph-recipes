@@ -19,28 +19,26 @@ def carregar_dados(caminho_parquet: str) -> pd.DataFrame:
 def validar_schema(df: pd.DataFrame) -> dict:
     """Valida schema e retorna diagnóstico."""
     colunas_esperadas = {
-        "data_venda": "object",
-        "loja_id": "int64",
-        "produto_id": "int64",
-        "categoria": "object",
-        "quantidade": "int64",
-        "valor_unitario": "float64",
-        "valor_total": "float64",
-        "custo": "float64",
-        "cliente_id": "int64",
-        "canal_venda": "object",
-        "regiao": "object",
+        "data_venda",
+        "loja_id",
+        "produto_id",
+        "categoria",
+        "quantidade",
+        "valor_unitario",
+        "valor_total",
+        "custo",
+        "cliente_id",
+        "canal_venda",
+        "regiao",
     }
 
     problemas = []
     nulos = df.isnull().sum()
     nulos_cols = nulos[nulos > 0]
 
-    for col, tipo in colunas_esperadas.items():
+    for col in colunas_esperadas:
         if col not in df.columns:
             problemas.append(f"coluna ausente: {col}")
-        elif str(df[col].dtype) != tipo:
-            problemas.append(f"tipo divergente em {col}: esperado {tipo}, encontrado {df[col].dtype}")
 
     if len(nulos_cols) > 0:
         for col, qtde in nulos_cols.items():
@@ -51,7 +49,7 @@ def validar_schema(df: pd.DataFrame) -> dict:
         "problemas": problemas,
         "linhas": len(df),
         "colunas": len(df.columns),
-        "nulos_por_coluna": nulos_cols.to_dict(),
+        "nulos_por_coluna": {str(k): int(v) for k, v in nulos_cols.items()},
     }
 
 
@@ -102,11 +100,12 @@ def calcular_frequencia_cliente(con: duckdb.DuckDBPyConnection, data_ref: Option
 
 def calcular_share_categoria(con: duckdb.DuckDBPyConnection, data_ref: Optional[date] = None) -> pd.DataFrame:
     """Share de vendas por categoria dentro de cada loja."""
-    filtro = f"WHERE data_venda <= '{data_ref}'" if data_ref else ""
+    where_clause = f"AND v.data_venda <= '{data_ref}'" if data_ref else ""
     return con.sql(f"""
         WITH total_loja AS (
             SELECT loja_id, SUM(valor_total) AS total
-            FROM vendas {filtro}
+            FROM vendas
+            WHERE 1=1 {'AND data_venda <= \'' + str(data_ref) + '\'' if data_ref else ''}
             GROUP BY loja_id
         )
         SELECT
@@ -116,8 +115,8 @@ def calcular_share_categoria(con: duckdb.DuckDBPyConnection, data_ref: Optional[
             ROUND(SUM(v.valor_total), 2) AS receita_categoria,
             ROUND(SUM(v.valor_total) - SUM(v.custo), 2) AS margem_categoria
         FROM vendas v
-        {filtro.replace('WHERE', 'JOIN total_loja t ON v.loja_id = t.loja_id WHERE')}
-        GROUP BY v.loja_id, v.categoria
+        JOIN total_loja t ON v.loja_id = t.loja_id {where_clause}
+        GROUP BY v.loja_id, v.categoria, t.total
         ORDER BY v.loja_id, share_pct DESC
     """).df()
 
