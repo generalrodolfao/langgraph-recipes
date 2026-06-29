@@ -16,8 +16,8 @@ Cada receita é um projeto autocontido com agente LangGraph funcional, dados de 
 
 | # | Projeto | Descrição | Stack |
 |---|---|---|---|
-| 1 | [**feature-engine-agent**](feature-engine-agent/) | Pipeline de feature engineering orquestrado por agentes: ingest → validate → transform → feature → save | LangGraph, DuckDB, Pandas |
-| ⬜ | **ml-pipeline-agent** | Orquestração ML end-to-end com checkpoints: split → train → evaluate → deploy | LangGraph, scikit-learn, MLflow |
+| 1 | [**feature-engine-agent**](feature-engine-agent/) | Pipeline de feature engineering: ingest → validate → transform → feature → save. 8 features, 200K transações, 7.6s | LangGraph, DuckDB, Pandas |
+| 2 | [**ml-pipeline-agent**](ml-pipeline-agent/) | Pipeline ML end-to-end com checkpoints: load → split → train → evaluate → select → deploy. 2 modelos, R²=0.988 | LangGraph, scikit-learn |
 | ⬜ | **data-quality-agent** | Squad de agentes de qualidade: completude, frescor, unicidade, consistência | LangGraph, Great Expectations |
 | ⬜ | **etl-orchestrator** | Spec ETL em linguagem natural → DAG Airflow monitorada por agente | LangGraph, Airflow |
 

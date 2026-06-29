@@ -91,16 +91,37 @@
 <!-- metrics -->
 <div class="grid-3">
   <div class="card metric">
-    <div class="value">200K</div>
+    <div class="value">2</div>
+    <div class="label">pipelines prontos</div>
+  </div>
+  <div class="card metric">
+    <div class="value">200K+</div>
     <div class="label">transações processadas</div>
   </div>
   <div class="card metric">
-    <div class="value">7.6s</div>
-    <div class="label">tempo de pipeline</div>
+    <div class="value">17</div>
+    <div class="label">features geradas</div>
   </div>
-  <div class="card metric">
-    <div class="value">8</div>
-    <div class="label">tabelas de features</div>
+</div>
+
+<!-- ml pipeline execution -->
+<div class="card">
+  <h2>ML Pipeline Agent — Previsão de Faturamento</h2>
+  <div class="execution">
+<span class="hi">=== ML Pipeline Agent ===</span>
+<span class="dim">Input:  data/vendas_ml.parquet
+Output: model.pkl</span>
+
+<span class="ok">[load]</span>     200 lojas, 23 meses, 29 features
+<span class="ok">[split]</span>    Treino: 3,680 amostras | Teste: 920 amostras
+<span class="ok">[train]</span>    RandomForest... LinearRegression... <span class="warn">(1.5s)</span>
+<span class="ok">[evaluate]</span> <span class="hi">RandomForest</span>  R²=0.9881  RMSE=14,324  MAE=8,768
+<span class="ok">[evaluate]</span> LinearReg      R²=0.9881  RMSE=14,355  MAE=9,431
+<span class="ok">[select]</span>   Melhor modelo: <span class="hi">RandomForest</span> (R²=0.9881)
+<span class="ok">[deploy]</span>   Modelo salvo: model.pkl (9.5 MB)
+
+<span class="hi">=== Pipeline concluído ===</span>
+<span class="ok">Status:</span> done | <span class="warn">Tempo total: 1.5s</span>
   </div>
 </div>
 
@@ -230,12 +251,12 @@ Output: features.duckdb</span>
   <h2>Receitas</h2>
   <div class="recipe-list">
     <div class="recipe done">
-      <h3>1. Feature Engine Agent <span style="color:var(--green);font-size:0.7rem">✅ pronto</span></h3>
-      <p>Pipeline de feature engineering com 8 features, 200K transações, 7.6s</p>
+      <h3>1. Feature Engine Agent <span style="color:var(--green);font-size:0.7rem">✅</span></h3>
+      <p>8 features, 200K transações, DuckDB, checkpoint — 7.6s</p>
     </div>
-    <div class="recipe pending">
-      <h3>2. ML Pipeline Agent <span style="color:var(--muted);font-size:0.7rem">em breve</span></h3>
-      <p>Orquestração ML end-to-end: split → train → evaluate → deploy com checkpoints</p>
+    <div class="recipe done">
+      <h3>2. ML Pipeline Agent <span style="color:var(--green);font-size:0.7rem">✅</span></h3>
+      <p>Previsão de faturamento: load → split → train → evaluate → select → deploy. R²=0.988</p>
     </div>
     <div class="recipe pending">
       <h3>3. Data Quality Agent <span style="color:var(--muted);font-size:0.7rem">em breve</span></h3>
