@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LangGraph Recipes — Data Squad</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --border: #1e1e2a;
+    --text: #e4e4ec;
+    --muted: #71717a;
+    --accent: #F17405;
+    --primary: #00154E;
+    --green: #22c55e;
+    --yellow: #eab308;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --purple: #a855f7;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: ui-monospace, 'Fira Code', monospace; line-height: 1.6; }
+  .container { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+  header { text-align: center; padding: 3rem 0 2rem; border-bottom: 1px solid var(--border); margin-bottom: 2rem; }
+  header h1 { font-size: 2rem; color: var(--accent); margin-bottom: 0.5rem; }
+  header p { color: var(--muted); font-size: 0.95rem; }
+  .badge-row { display: flex; justify-content: center; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap; }
+  .badge { background: var(--primary); color: var(--accent); padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.8rem; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; }
+  .card h2 { color: var(--accent); font-size: 1.2rem; margin-bottom: 1rem; }
+  .card h3 { color: var(--text); font-size: 1rem; margin: 1rem 0 0.5rem; }
+
+  .flow { display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap; padding: 2rem 0; }
+  .node { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.2rem; text-align: center; min-width: 100px; }
+  .node .icon { font-size: 1.5rem; margin-bottom: 0.25rem; }
+  .node .label { font-size: 0.85rem; font-weight: 600; }
+  .node .sublabel { font-size: 0.7rem; color: var(--muted); }
+  .arrow { color: var(--accent); font-size: 1.2rem; }
+  .node.success { border-color: var(--green); }
+  .node.success .label { color: var(--green); }
+
+  .execution { background: #0d1117; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; font-size: 0.82rem; overflow-x: auto; white-space: pre; color: #c9d1d9; }
+  .execution .dim { color: #8b949e; }
+  .execution .ok { color: var(--green); }
+  .execution .warn { color: var(--yellow); }
+  .execution .hi { color: var(--accent); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th { text-align: left; color: var(--muted); padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); font-weight: 500; }
+  td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .tag { font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 3px; }
+  .tag-py { background: #30699820; color: #ffd43b; }
+  .tag-duck { background: #fff00015; color: #fff000; }
+  .tag-lg { background: #1c3c3c20; color: #22c55e; }
+  .tag-pd { background: #e7048820; color: #e70488; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; }
+
+  .metric { text-align: center; padding: 1rem; }
+  .metric .value { font-size: 1.8rem; font-weight: 700; color: var(--accent); }
+  .metric .label { font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; }
+
+  .recipe-list { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .recipe { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; }
+  .recipe.done { border-color: var(--green); }
+  .recipe.pending { opacity: 0.5; }
+  .recipe h3 { font-size: 0.95rem; margin-bottom: 0.5rem; }
+  .recipe p { font-size: 0.8rem; color: var(--muted); }
+
+  @media(max-width: 700px) { .grid-2, .grid-3, .recipe-list { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>LangGraph Recipes</h1>
+  <p>Exemplos prontos pra produção: agentes, feature engineering, ML pipelines com LangGraph</p>
+  <div class="badge-row">
+    <span class="badge">Python 3.11+</span>
+    <span class="badge">LangGraph 1.2+</span>
+    <span class="badge">DuckDB</span>
+    <span class="badge">MIT</span>
+  </div>
+</header>
+
+<!-- metrics -->
+<div class="grid-3">
+  <div class="card metric">
+    <div class="value">200K</div>
+    <div class="label">transações processadas</div>
+  </div>
+  <div class="card metric">
+    <div class="value">7.6s</div>
+    <div class="label">tempo de pipeline</div>
+  </div>
+  <div class="card metric">
+    <div class="value">8</div>
+    <div class="label">tabelas de features</div>
+  </div>
+</div>
+
+<!-- execution output -->
+<div class="card">
+  <h2>Execução do Feature Engine Agent</h2>
+  <div class="execution">
+<span class="hi">=== Feature Engine Agent ===</span>
+<span class="dim">Input:  data/vendas.parquet
+Output: features.duckdb</span>
+
+<span class="ok">[ingest]</span>   Carregando dados...
+<span class="ok">[ingest]</span>   200,000 linhas carregadas
+<span class="ok">[validate]</span> Validando schema... Schema OK
+<span class="ok">[transform]</span> Limpando dados... 0 removidas, 200,000 restantes
+<span class="ok">[features]</span> Calculando features...
+  - ticket_medio...
+  - frequencia_cliente...
+  - share_categoria...
+  - crescimento_mom...
+  - recencia_cliente...
+  - tendencia_7d...
+  - sazonalidade_dia...
+  - top_produtos...
+<span class="ok">[features]</span> 8 tabelas geradas, 71,021 linhas totais
+<span class="ok">[save]</span>     Salvando features em features.duckdb (2.5 MB)
+
+<span class="hi">=== Pipeline concluído ===</span>
+<span class="ok">Status:</span> done | <span class="warn">Tempo total: 7.6s</span>
+  </div>
+</div>
+
+<!-- flow diagram -->
+<div class="card">
+  <h2>Fluxo do Agente</h2>
+  <div class="flow">
+    <div class="node success">
+      <div class="icon">📥</div>
+      <div class="label">Ingest</div>
+      <div class="sublabel">Parquet → DF</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="node success">
+      <div class="icon">✅</div>
+      <div class="label">Validate</div>
+      <div class="sublabel">schema & nulos</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="node success">
+      <div class="icon">🧹</div>
+      <div class="label">Transform</div>
+      <div class="sublabel">clean & filter</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="node success">
+      <div class="icon">⚡</div>
+      <div class="label">Feature Calc</div>
+      <div class="sublabel">8 features</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="node success">
+      <div class="icon">💾</div>
+      <div class="label">Save</div>
+      <div class="sublabel">DuckDB</div>
+    </div>
+  </div>
+  <p style="text-align:center;color:var(--muted);font-size:0.8rem;margin-top:0.5rem">Cada nó é atômico — checkpoint via MemorySaver permite retomar de falhas</p>
+</div>
+
+<!-- feature tables -->
+<div class="card">
+  <h2>Features Geradas (8 tabelas, 71K linhas)</h2>
+  <table>
+    <tr><th>Tabela</th><th class="num">Linhas</th><th>Granularidade</th><th>Descrição</th></tr>
+    <tr><td><code>frequencia_cliente</code></td><td class="num">57,831</td><td>Cliente × Mês</td><td>Compras, gasto, lojas visitadas</td></tr>
+    <tr><td><code>recencia_cliente</code></td><td class="num">5,000</td><td>Cliente</td><td>Dias desde última compra</td></tr>
+    <tr><td><code>ticket_medio</code></td><td class="num">3,650</td><td>Loja × Dia</td><td>Receita ÷ nº vendas</td></tr>
+    <tr><td><code>tendencia_7d</code></td><td class="num">3,650</td><td>Loja × Dia</td><td>Média móvel 7d + % desvio</td></tr>
+    <tr><td><code>top_produtos</code></td><td class="num">600</td><td>Loja × Mês</td><td>Top 5 por receita</td></tr>
+    <tr><td><code>crescimento_mom</code></td><td class="num">120</td><td>Loja × Mês</td><td>Variação % mês anterior</td></tr>
+    <tr><td><code>share_categoria</code></td><td class="num">100</td><td>Loja × Categoria</td><td>% receita + margem</td></tr>
+    <tr><td><code>sazonalidade_dia</code></td><td class="num">70</td><td>Loja × Dia Semana</td><td>Índice sazonal</td></tr>
+  </table>
+</div>
+
+<!-- sample results -->
+<div class="grid-2">
+  <div class="card">
+    <h3>Ticket Médio — Top 5 Lojas</h3>
+    <table>
+      <tr><th>Loja</th><th class="num">Ticket Médio</th></tr>
+      <tr><td>9</td><td class="num">R$ 2,954.17</td></tr>
+      <tr><td>6</td><td class="num">R$ 2,947.85</td></tr>
+      <tr><td>8</td><td class="num">R$ 2,947.05</td></tr>
+      <tr><td>3</td><td class="num">R$ 2,934.75</td></tr>
+      <tr><td>7</td><td class="num">R$ 2,924.86</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Crescimento MoM — Loja 1</h3>
+    <table>
+      <tr><th>Mês</th><th class="num">Receita</th><th class="num">Δ%</th></tr>
+      <tr><td>2025-12</td><td class="num">R$ 5,036,463</td><td class="num" style="color:var(--green)">+7.69%</td></tr>
+      <tr><td>2025-11</td><td class="num">R$ 4,676,911</td><td class="num" style="color:var(--red)">-4.07%</td></tr>
+      <tr><td>2025-10</td><td class="num">R$ 4,875,102</td><td class="num" style="color:var(--green)">+2.15%</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- tech badges -->
+<div class="card">
+  <h2>Stack</h2>
+  <p style="display:flex;gap:0.5rem;flex-wrap:wrap">
+    <span class="tag tag-lg">LangGraph</span>
+    <span class="tag tag-lg">Checkpointer</span>
+    <span class="tag tag-duck">DuckDB</span>
+    <span class="tag tag-py">Python 3.11+</span>
+    <span class="tag tag-pd">Pandas</span>
+    <span class="tag tag-py">PyArrow</span>
+    <span class="tag tag-py">pytest</span>
+  </p>
+</div>
+
+<!-- recipes list -->
+<div class="card">
+  <h2>Receitas</h2>
+  <div class="recipe-list">
+    <div class="recipe done">
+      <h3>1. Feature Engine Agent <span style="color:var(--green);font-size:0.7rem">✅ pronto</span></h3>
+      <p>Pipeline de feature engineering com 8 features, 200K transações, 7.6s</p>
+    </div>
+    <div class="recipe pending">
+      <h3>2. ML Pipeline Agent <span style="color:var(--muted);font-size:0.7rem">em breve</span></h3>
+      <p>Orquestração ML end-to-end: split → train → evaluate → deploy com checkpoints</p>
+    </div>
+    <div class="recipe pending">
+      <h3>3. Data Quality Agent <span style="color:var(--muted);font-size:0.7rem">em breve</span></h3>
+      <p>Squad de agentes por dimensão de qualidade: completude, frescor, unicidade, consistência</p>
+    </div>
+    <div class="recipe pending">
+      <h3>4. ETL Orchestrator <span style="color:var(--muted);font-size:0.7rem">em breve</span></h3>
+      <p>Spec ETL em linguagem natural → DAG Airflow monitorada por agente</p>
+    </div>
+  </div>
+</div>
+
+<footer style="text-align:center;padding:2rem 0;color:var(--muted);font-size:0.8rem">
+  <p><a href="https://github.com/generalrodolfao/langgraph-recipes" style="color:var(--accent)">github.com/generalrodolfao/langgraph-recipes</a></p>
+  <p>Data Squad · MIT License</p>
+</footer>
+
+</div>
+</body>
+</html>
