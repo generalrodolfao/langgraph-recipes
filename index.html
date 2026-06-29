@@ -91,7 +91,7 @@
 <!-- metrics -->
 <div class="grid-3">
   <div class="card metric">
-    <div class="value">2</div>
+    <div class="value">3</div>
     <div class="label">pipelines prontos</div>
   </div>
   <div class="card metric">
@@ -99,8 +99,33 @@
     <div class="label">transações processadas</div>
   </div>
   <div class="card metric">
-    <div class="value">17</div>
-    <div class="label">features geradas</div>
+    <div class="value">30</div>
+    <div class="label">testes passando</div>
+  </div>
+</div>
+
+<!-- dq audit execution -->
+<div class="card">
+  <h2>Data Quality Agent — Squad de 5 Agentes</h2>
+  <div class="execution">
+<span class="hi">=== Data Quality Audit ===</span>
+<span class="dim">Input:  500 clientes e-commerce, 13 colunas, 550 nulos detectados</span>
+
+<span class="ok">[completude]</span>    2 colunas com &gt;5% nulos (telefone: 8.0%, email_alt: 98.0%)
+<span class="ok">[frescor]</span>       <span class="warn">⚠ 49.0% dos registros sem atualizacao ha &gt;2 anos</span>
+<span class="ok">[unicidade]</span>     <span class="warn">⚠ 1 CPF duplicado</span>
+<span class="ok">[consistencia]</span>  <span class="warn">⚠ 9 violacoes: idade negativa (3), email invalido (2), data invalida (4)</span>
+<span class="ok">[acuracia]</span>      <span class="warn">⚠ 7 outliers: renda (5), compras_12m (2)</span>
+
+<span class="hi">=== Diagnosticos ===</span>
+Score qualidade: <span class="warn">45/100</span> | Severidade: <span class="warn">ALTA</span>
+Alertas: 3 criticos, 2 warnings | Tempo total: 0.1s
+
+  ❌ CRITICO     frescor         49.0% dos registros sem atualizacao
+  ❌ CRITICO     consistencia    9 violacoes em 3 regras
+  ❌ CRITICO     acuracia        7 outliers em 2 colunas
+  ⚠ WARNING     completude      2 colunas com &gt;5% nulos
+  ⚠ WARNING     unicidade       1 duplicatas encontradas
   </div>
 </div>
 
@@ -258,9 +283,9 @@ Output: features.duckdb</span>
       <h3>2. ML Pipeline Agent <span style="color:var(--green);font-size:0.7rem">✅</span></h3>
       <p>Previsão de faturamento: load → split → train → evaluate → select → deploy. R²=0.988</p>
     </div>
-    <div class="recipe pending">
-      <h3>3. Data Quality Agent <span style="color:var(--muted);font-size:0.7rem">em breve</span></h3>
-      <p>Squad de agentes por dimensão de qualidade: completude, frescor, unicidade, consistência</p>
+    <div class="recipe done">
+      <h3>3. Data Quality Agent <span style="color:var(--green);font-size:0.7rem">✅</span></h3>
+      <p>Squad de 5 agentes: completude, frescor, unicidade, consistência, acurácia em paralelo</p>
     </div>
     <div class="recipe pending">
       <h3>4. ETL Orchestrator <span style="color:var(--muted);font-size:0.7rem">em breve</span></h3>

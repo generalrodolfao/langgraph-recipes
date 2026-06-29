@@ -22,3 +22,13 @@ jobs:
       - run: pip install -r ml-pipeline-agent/requirements.txt
       - run: python ml-pipeline-agent/data/generate.py
       - run: pytest ml-pipeline-agent/tests/ -v
+
+  test-data-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r data-quality-agent/requirements.txt
+      - run: python data-quality-agent/data/generate.py
+      - run: pytest data-quality-agent/tests/ -v
